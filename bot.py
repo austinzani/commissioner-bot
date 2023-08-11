@@ -1,6 +1,6 @@
 import os
 import discord
-from webhook import sample_complete_free_agent_claim, post_free_agency_transaction
+from commissioner_bot.webhook import sample_complete_free_agent_claim, post_free_agency_transaction, post_waiver_claim_transaction, sample_completed_waiver_claim, sample_failed_waiver_claim, sample_drop, post_trade, sample_trade
 
 TOKEN = os.environ['DISCORD_TOKEN']
 GUILD = os.environ['DISCORD_GUILD']
@@ -63,4 +63,8 @@ GUILD = os.environ['DISCORD_GUILD']
 #
 # client.run(TOKEN)
 
-post_free_agency_transaction(sample_complete_free_agent_claim)
+# post_free_agency_transaction(sample_complete_free_agent_claim)
+# post_free_agency_transaction(sample_drop)
+# post_waiver_claim_transaction(sample_completed_waiver_claim, [sample_failed_waiver_claim, sample_failed_waiver_claim])
+# post_waiver_claim_transaction(sample_completed_waiver_claim)
+post_trade(sample_trade)
