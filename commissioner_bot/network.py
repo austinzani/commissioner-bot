@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import time
+from typing import Tuple
 
 discord_webhook_url = os.environ['DISCORD_WEBHOOK_URL']
 
@@ -10,7 +11,7 @@ headers = {
 }
 
 
-def send_request_with_retries(url, method='GET', max_retries=3, retry_delay=1, json_body=None, **kwargs):
+def send_request_with_retries(url, method='GET', max_retries=3, retry_delay=1, json_body=None, **kwargs) -> Tuple[bool, dict]:
     """
     Send an HTTP request with built-in error handling and retry mechanism.
 
@@ -31,7 +32,7 @@ def send_request_with_retries(url, method='GET', max_retries=3, retry_delay=1, j
                 kwargs['data'] = json.dumps(json_body)
             response = requests.request(method, url, **kwargs)
             response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
-            return response
+            return True, response.json() if response.text else None
         except requests.exceptions.RequestException as e:
             print(f"Request failed (attempt {retry + 1}/{max_retries + 1}): {e}")
             if retry < max_retries:
@@ -39,7 +40,7 @@ def send_request_with_retries(url, method='GET', max_retries=3, retry_delay=1, j
                 time.sleep(retry_delay)
             else:
                 print("Max retries reached. Giving up.")
-                break
+                return False, None
 
 
 def send_discord_message(message: dict):
