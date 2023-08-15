@@ -2,7 +2,6 @@ import os
 import discord
 
 from commissioner_bot.sleeper import Sleeper
-from commissioner_bot.mongodb import MongoDatabase
 
 TOKEN = os.environ['DISCORD_TOKEN']
 GUILD = os.environ['DISCORD_GUILD']
@@ -65,5 +64,4 @@ league_id = os.environ['LEAGUE_ID']
 #                 return
 #
 # client.run(TOKEN)
-
-Sleeper(league_id).process_transactions(4)
+Sleeper(league_id).process_transactions(9)

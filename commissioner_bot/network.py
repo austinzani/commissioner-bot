@@ -11,7 +11,7 @@ headers = {
 }
 
 
-def send_request_with_retries(url, method='GET', max_retries=3, retry_delay=1, json_body=None, **kwargs) -> Tuple[bool, dict]:
+def send_request_with_retries(url, method='GET', max_retries=3, retry_delay=1, json_body=None, headers=headers, **kwargs) -> Tuple[bool, dict or None]:
     """
     Send an HTTP request with built-in error handling and retry mechanism.
 
@@ -21,7 +21,8 @@ def send_request_with_retries(url, method='GET', max_retries=3, retry_delay=1, j
         max_retries (int): The maximum number of retries (default is 3).
         retry_delay (int): The delay between retries in seconds (default is 1).
         json_body (dict): The JSON body to send with the request (default is None).
-        **kwargs: Additional keyword arguments to pass to the requests library.
+        headers (dict): The headers to send with the request (default is headers).
+        **kwargs: Additional keyword arguments to pass to the request library.
 
     Returns:
         requests.Response: The response object from the HTTP request.
@@ -30,6 +31,8 @@ def send_request_with_retries(url, method='GET', max_retries=3, retry_delay=1, j
         try:
             if json_body:
                 kwargs['data'] = json.dumps(json_body)
+            if headers:
+                kwargs['headers'] = headers
             response = requests.request(method, url, **kwargs)
             response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
             return True, response.json() if response.text else None
@@ -41,13 +44,3 @@ def send_request_with_retries(url, method='GET', max_retries=3, retry_delay=1, j
             else:
                 print("Max retries reached. Giving up.")
                 return False, None
-
-
-def send_discord_message(message: dict):
-    """
-    Send a message to a Discord webhook.
-
-    Args:
-        message (dict): The message to send.
-    """
-    return send_request_with_retries(discord_webhook_url, method='POST', json_body=message, headers=headers)
