@@ -20,5 +20,11 @@ class MongoCollection:
     def get(self, search):
         return self.collection.find_one(search)
 
-    def get_all(self):
-        return list(self.collection.find())
+    def get_all(self, search):
+        return list(self.collection.find(search))
+
+    def delete(self, search):
+        return self.collection.delete_many(search)
+
+    def delete_all(self, search):
+        return self.collection.delete_many(search)
