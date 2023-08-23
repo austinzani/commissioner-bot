@@ -1,6 +1,6 @@
 from commissioner_bot.network import send_request_with_retries, discord_webhook_url
 from commissioner_bot.utility import team_colors
-from commissioner_bot.discord import Discord, add_string, drop_string
+from commissioner_bot.discord_bot import Discord, add_string, drop_string
 from commissioner_bot.mongodb import MongoDatabase, MongoCollection
 import os
 
@@ -8,13 +8,13 @@ sleeper_logo_url = "https://play-lh.googleusercontent.com/Ox2yWLWnOTu8x2ZWVQuuf0
 
 
 class Sleeper:
-    def __init__(self, league_id):
+    def __init__(self, league_id, client):
         self.league_id = league_id
         self.db = MongoDatabase(os.environ['MONGODB_CONNECTION_URL'], 'commissioner_bot')
         self.league = MongoCollection(self.db, league_id)
         self.players = MongoCollection(self.db, 'players')
         self.managers = MongoCollection(self.db, 'managers')
-        self.discord = Discord(discord_webhook_url, discord_webhook_url, discord_webhook_url, "Sleeper", sleeper_logo_url)
+        self.discord = Discord(client)
 
     @staticmethod
     def get_nfl_state():
@@ -73,7 +73,7 @@ class Sleeper:
         result = self.managers.get({"league_id": self.league_id})
         return result['users'] if result is not None else None
 
-    def process_transactions(self, week):
+    async def process_transactions(self, week):
         success, transactions = self.get_league_transactions(week)
         for transaction in transactions:
             transaction_id = transaction['transaction_id']
@@ -96,11 +96,11 @@ class Sleeper:
                         if t['status'] == 'failed':
                             if player_id in t['adds'] and t['status_updated'] == transaction['status_updated']:
                                 failed.append(t)
-                success, _ = self.process_waiver_claim_transaction(transaction, failed)
+                success = await self.process_waiver_claim_transaction(transaction, failed)
             elif transaction['type'] == 'trade':
-                success, _ = self.process_trade(transaction)
+                success = await self.process_trade(transaction)
             elif transaction['type'] == 'free_agent':
-                success, _ = self.process_free_agency_transaction(transaction)
+                success = await self.process_free_agency_transaction(transaction)
             if success:
                 self.league.insert({"transaction_id": transaction_id, "status": "processed", "league_id": self.league_id})
 
@@ -136,7 +136,7 @@ class Sleeper:
             return f"{player['team']} DEF", f"https://sleepercdn.com/images/team_logos/nfl/{player['team'].lower()}.png", team_color
         return f"{player['full_name']}: ({player['position']})", f"https://sleepercdn.com/content/nfl/players/{player_id}.jpg", team_color
 
-    def process_free_agency_transaction(self, transaction: dict):
+    async def process_free_agency_transaction(self, transaction: dict):
         """
         Post a free agency transaction to Discord.
         :param transaction: The transaction to post.
@@ -170,9 +170,9 @@ class Sleeper:
         team_object = users[str(team_id)]
         team_name, avatar_url = self.parse_team_object(team_object)
 
-        return self.discord.post_free_agency_transaction(team_name, avatar_url, thumbnail_url, team_color, fields, add is not None)
+        return await self.discord.post_free_agency_transaction(team_name, avatar_url, thumbnail_url, team_color, fields, add is not None)
 
-    def process_waiver_claim_transaction(self, transaction: dict, failures: list = None):
+    async def process_waiver_claim_transaction(self, transaction: dict, failures: list = None):
         """
         Post a waiver claim transaction to Discord.
         :param failures: dictionary of failed transactions tied to the same waiver claim
@@ -215,7 +215,7 @@ class Sleeper:
         team_object = users[str(team_id)]
         team_name, avatar_url = self.parse_team_object(team_object)
 
-        return self.discord.post_waiver_claim_transaction(team_name, avatar_url, thumbnail_url, team_color, fields)
+        return await self.discord.post_waiver_claim_transaction(team_name, avatar_url, thumbnail_url, team_color, fields)
 
     def parse_trade_for_team(self, transaction: dict, team_id: int) -> tuple:
         """
@@ -250,7 +250,7 @@ class Sleeper:
 
         return gives, gets
 
-    def process_trade(self, transaction: dict):
+    async def process_trade(self, transaction: dict):
         """
         Post a trade transaction to Discord.
         :param transaction: The transaction to post.
@@ -260,6 +260,7 @@ class Sleeper:
         teams = transaction['roster_ids']
         fields = []
         users = self.get_league_managers()
+        trade_team_names = []
         for team in teams:
             team_object = users[str(team)]
             team_name, _ = self.parse_team_object(team_object)
@@ -268,5 +269,6 @@ class Sleeper:
             fields.append(self.discord.create_field("Gives ➡️️", "\n".join(gives), True))
             fields.append(self.discord.create_field("", "", True))
             fields.append(self.discord.create_field("Gets ⬅️", "\n".join(gets), True))
+            trade_team_names.append(users[str(team)]['display_name'])
 
-        return self.discord.post_trade([users[str(team)]['display_name'] for team in teams], fields)
+        return await self.discord.post_trade(trade_team_names, fields)
