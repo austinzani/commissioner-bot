@@ -8,13 +8,13 @@ sleeper_logo_url = "https://play-lh.googleusercontent.com/Ox2yWLWnOTu8x2ZWVQuuf0
 
 
 class Sleeper:
-    def __init__(self, league_id, client):
+    def __init__(self, league_id, bot):
         self.league_id = league_id
         self.db = MongoDatabase(os.environ['MONGODB_CONNECTION_URL'], 'commissioner_bot')
         self.league = MongoCollection(self.db, league_id)
         self.players = MongoCollection(self.db, 'players')
         self.managers = MongoCollection(self.db, 'managers')
-        self.discord = Discord(client)
+        self.discord = Discord(bot)
 
     @staticmethod
     def get_nfl_state():
@@ -23,6 +23,14 @@ class Sleeper:
     @staticmethod
     def get_nfl_players():
         return send_request_with_retries('https://api.sleeper.app/v1/players/nfl')
+
+    @staticmethod
+    def get_user_from_username(username):
+        return send_request_with_retries(f'https://api.sleeper.app/v1/user/{username}')
+
+    @staticmethod
+    def get_leagues_from_user(user_id, year):
+        return send_request_with_retries(f'https://api.sleeper.app/v1/user/{user_id}/leagues/nfl/{year}')
 
     def get_league_users(self):
         return send_request_with_retries(f'https://api.sleeper.app/v1/league/{self.league_id}/users')

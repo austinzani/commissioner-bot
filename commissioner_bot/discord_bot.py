@@ -1,5 +1,5 @@
-from commissioner_bot.network import send_request_with_retries
 import discord
+from discord.ext import commands
 from commissioner_bot.environment import GUILD
 
 add_string = "ADD ✅"
@@ -8,8 +8,8 @@ poll_options = ["✅", "❌"]
 
 
 class Discord:
-    def __init__(self, client: discord.Client):
-        self.client = client
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
 
     @staticmethod
     def create_field(name: str, value: str, inline: bool = False):
@@ -36,7 +36,7 @@ class Discord:
             embedded_message.add_field(name=field['name'], value=field['value'], inline=field['inline'])
         embedded_message.set_thumbnail(url=thumbnail_url)
         embedded_message.set_author(name="Free Agency Pickup" if add else "Drop", icon_url=avatar_url)
-        guild = discord.utils.get(self.client.guilds, name=GUILD)
+        guild = discord.utils.get(self.bot.guilds, name=GUILD)
         if guild is not None:
             print(guild.channels)
             channel_id = None
@@ -66,7 +66,7 @@ class Discord:
             embedded_message.add_field(name=field['name'], value=field['value'], inline=field['inline'])
         embedded_message.set_thumbnail(url=thumbnail_url)
         embedded_message.set_author(name="Waiver Claim", icon_url=avatar_url)
-        guild = discord.utils.get(self.client.guilds, name=GUILD)
+        guild = discord.utils.get(self.bot.guilds, name=GUILD)
         if guild is not None:
             print(guild.channels)
             channel_id = None
@@ -95,7 +95,7 @@ class Discord:
         embedded_message.set_author(name="Trade", icon_url="https://play-lh.googleusercontent.com/Ox2yWLWnOTu8x2ZWVQuuf0VqK_27kEqDMnI91fO6-1HHkvZ24wTYCZRbVZfRdx3DXn4=w240-h480-rw")
         embedded_message.set_thumbnail(url="https://www.theshirtlist.com/wp-content/uploads/2022/11/Epic-Handshake.jpg")
         embedded_message.set_footer(text="React with ✅ to approve the trade or ❌ to veto the trade.")
-        guild = discord.utils.get(self.client.guilds, name=GUILD)
+        guild = discord.utils.get(self.bot.guilds, name=GUILD)
         if guild is not None:
             print(guild.channels)
             channel_id = None
