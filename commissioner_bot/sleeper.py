@@ -1,20 +1,17 @@
-from commissioner_bot.network import send_request_with_retries, discord_webhook_url
+from commissioner_bot.network import send_request_with_retries
 from commissioner_bot.utility import team_colors
 from commissioner_bot.discord_bot import Discord, add_string, drop_string
-from commissioner_bot.mongodb import MongoDatabase, MongoCollection
-import os
+from commissioner_bot.mongodb import MongoCollection, db, player_collection, manager_collection
+
 
 sleeper_logo_url = "https://play-lh.googleusercontent.com/Ox2yWLWnOTu8x2ZWVQuuf0VqK_27kEqDMnI91fO6-1HHkvZ24wTYCZRbVZfRdx3DXn4=w240-h480-rw"
 
 
 class Sleeper:
-    def __init__(self, league_id, bot):
+    def __init__(self, league_id: str, discord: Discord):
         self.league_id = league_id
-        self.db = MongoDatabase(os.environ['MONGODB_CONNECTION_URL'], 'commissioner_bot')
-        self.league = MongoCollection(self.db, league_id)
-        self.players = MongoCollection(self.db, 'players')
-        self.managers = MongoCollection(self.db, 'managers')
-        self.discord = Discord(bot)
+        self.league = MongoCollection(db, league_id)
+        self.discord = discord
 
     @staticmethod
     def get_nfl_state():
@@ -41,18 +38,20 @@ class Sleeper:
     def get_league_rosters(self):
         return send_request_with_retries(f'https://api.sleeper.app/v1/league/{self.league_id}/rosters')
 
-    def update_players(self):
-        success, players = self.get_nfl_players()
+    @staticmethod
+    def update_players():
+        success, players = Sleeper.get_nfl_players()
         if success:
             for player in players:
                 player_object = players[player]
                 player_object['_id'] = player
-                self.players.insert(player_object)
+                player_collection.insert(player_object)
         else:
             print('Failed to update players')
 
-    def get_player(self, player_id):
-        return self.players.get({"_id": player_id})
+    @staticmethod
+    def get_player(player_id):
+        return player_collection.get({"_id": player_id})
 
     def update_league_managers(self):
         success, users = self.get_league_users()
@@ -75,10 +74,10 @@ class Sleeper:
                         'display_name': user.get('display_name', None)
                     }
                     break
-        self.managers.insert({"league_id": self.league_id, "users": updated_users})
+        manager_collection.insert({"league_id": self.league_id, "users": updated_users})
 
     def get_league_managers(self):
-        result = self.managers.get({"league_id": self.league_id})
+        result = manager_collection.get({"league_id": self.league_id})
         return result['users'] if result is not None else None
 
     async def process_transactions(self, week):

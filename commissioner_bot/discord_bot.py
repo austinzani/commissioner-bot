@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from commissioner_bot.environment import GUILD
 
 add_string = "ADD ✅"
 drop_string = "DROP 🔻"
@@ -8,8 +7,11 @@ poll_options = ["✅", "❌"]
 
 
 class Discord:
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, guild: str, trade_channel: str, free_agency_channel: str):
         self.bot = bot
+        self.guild = int(guild)
+        self.trade_channel = int(trade_channel)
+        self.free_agency_channel = int(free_agency_channel)
 
     @staticmethod
     def create_field(name: str, value: str, inline: bool = False):
@@ -18,6 +20,33 @@ class Discord:
             "value": value,
             "inline": inline
         }
+
+    async def send_pickup_message(self, embed: discord.Embed):
+        """
+        Send a message to the free agency channel.
+        :param embed: the embedded message to send.
+        :return:
+        """
+        guild = discord.utils.get(self.bot.guilds, id=self.guild)
+        if guild is not None:
+            print(guild.channels)
+            channel_id = None
+            for channel in guild.channels:
+                if channel.id == self.free_agency_channel:
+                    channel_id = channel.id
+                    break
+            if channel_id is not None:
+                target_channel = guild.get_channel(channel_id)
+                if target_channel is not None:
+                    await target_channel.send(embed=embed)
+            else:
+                print("Could not find the free agency channel.")
+                return False
+        else:
+            print("Could not find the guild.")
+            return False
+
+        return True
 
     async def post_free_agency_transaction(self, team_name: str, avatar_url: str, thumbnail_url: str, team_color: str, fields: list, add: bool):
         """
@@ -36,20 +65,7 @@ class Discord:
             embedded_message.add_field(name=field['name'], value=field['value'], inline=field['inline'])
         embedded_message.set_thumbnail(url=thumbnail_url)
         embedded_message.set_author(name="Free Agency Pickup" if add else "Drop", icon_url=avatar_url)
-        guild = discord.utils.get(self.bot.guilds, name=GUILD)
-        if guild is not None:
-            print(guild.channels)
-            channel_id = None
-            for channel in guild.channels:
-                if channel.name == "general":
-                    channel_id = channel.id
-                    break
-            if channel_id is not None:
-                target_channel = guild.get_channel(channel_id)
-                if target_channel is not None:
-                    await target_channel.send(embed=embedded_message)
-
-        return True
+        return await self.send_pickup_message(embedded_message)
 
     async def post_waiver_claim_transaction(self, team_name: str, avatar_url: str, thumbnail_url: str, team_color: str, fields: list):
         """
@@ -66,20 +82,7 @@ class Discord:
             embedded_message.add_field(name=field['name'], value=field['value'], inline=field['inline'])
         embedded_message.set_thumbnail(url=thumbnail_url)
         embedded_message.set_author(name="Waiver Claim", icon_url=avatar_url)
-        guild = discord.utils.get(self.bot.guilds, name=GUILD)
-        if guild is not None:
-            print(guild.channels)
-            channel_id = None
-            for channel in guild.channels:
-                if channel.name == "general":
-                    channel_id = channel.id
-                    break
-            if channel_id is not None:
-                target_channel = guild.get_channel(channel_id)
-                if target_channel is not None:
-                    await target_channel.send(embed=embedded_message)
-
-        return True
+        return await self.send_pickup_message(embedded_message)
 
     async def post_trade(self, teams: list, fields: list):
         """
@@ -95,12 +98,12 @@ class Discord:
         embedded_message.set_author(name="Trade", icon_url="https://play-lh.googleusercontent.com/Ox2yWLWnOTu8x2ZWVQuuf0VqK_27kEqDMnI91fO6-1HHkvZ24wTYCZRbVZfRdx3DXn4=w240-h480-rw")
         embedded_message.set_thumbnail(url="https://www.theshirtlist.com/wp-content/uploads/2022/11/Epic-Handshake.jpg")
         embedded_message.set_footer(text="React with ✅ to approve the trade or ❌ to veto the trade.")
-        guild = discord.utils.get(self.bot.guilds, name=GUILD)
+        guild = discord.utils.get(self.bot.guilds, name=self.guild)
         if guild is not None:
             print(guild.channels)
             channel_id = None
             for channel in guild.channels:
-                if channel.name == "general":
+                if channel.name == self.trade_channel:
                     channel_id = channel.id
                     break
             if channel_id is not None:
@@ -111,5 +114,11 @@ class Discord:
                     # Add the reactions
                     for emoji in poll_options:
                         await poll_message.add_reaction(emoji)
+                else:
+                    print("Could not find the trade channel.")
+                    return False
+        else:
+            print("Could not find the guild.")
+            return False
 
         return True

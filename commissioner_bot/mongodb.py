@@ -1,4 +1,5 @@
 import pymongo
+import os
 
 
 class MongoDatabase:
@@ -17,10 +18,13 @@ class MongoCollection:
     def insert(self, data):
         self.collection.insert_one(data)
 
+    def update(self, search, data):
+        self.collection.update_one(search, data)
+
     def get(self, search):
         return self.collection.find_one(search)
 
-    def get_all(self, search):
+    def get_all(self, search = None):
         return list(self.collection.find(search))
 
     def delete(self, search):
@@ -28,3 +32,11 @@ class MongoCollection:
 
     def delete_all(self, search):
         return self.collection.delete_many(search)
+
+
+db = MongoDatabase(os.environ['MONGODB_CONNECTION_URL'], 'commissioner_bot')
+player_collection = MongoCollection(db, 'players')
+manager_collection = MongoCollection(db, 'managers')
+reaction_collection = MongoCollection(db, 'reactions')
+guild_preferences_collection = MongoCollection(db, 'guild_preferences')
+dm_collection = MongoCollection(db, 'direct_messages')
