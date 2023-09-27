@@ -10,8 +10,6 @@ from commissioner_bot.mongodb import reaction_collection, guild_preferences_coll
 from commissioner_bot.sleeper import Sleeper
 
 TOKEN = os.environ['DISCORD_TOKEN']
-GUILD = os.environ['DISCORD_GUILD']
-league_id = os.environ['LEAGUE_ID']
 options = ["✅", "❌"]
 
 intents = discord.Intents.default()

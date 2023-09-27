@@ -1,11 +1,7 @@
 import requests
 import json
-import os
 import time
 from typing import Tuple
-
-discord_webhook_url = os.environ['DISCORD_WEBHOOK_URL']
-
 headers = {
     'Content-Type': 'application/json',
 }
