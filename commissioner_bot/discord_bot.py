@@ -98,12 +98,12 @@ class Discord:
         embedded_message.set_author(name="Trade", icon_url="https://play-lh.googleusercontent.com/Ox2yWLWnOTu8x2ZWVQuuf0VqK_27kEqDMnI91fO6-1HHkvZ24wTYCZRbVZfRdx3DXn4=w240-h480-rw")
         embedded_message.set_thumbnail(url="https://www.theshirtlist.com/wp-content/uploads/2022/11/Epic-Handshake.jpg")
         embedded_message.set_footer(text="React with ✅ to approve the trade or ❌ to veto the trade.")
-        guild = discord.utils.get(self.bot.guilds, name=self.guild)
+        guild = discord.utils.get(self.bot.guilds, id=self.guild)
         if guild is not None:
             print(guild.channels)
             channel_id = None
             for channel in guild.channels:
-                if channel.name == self.trade_channel:
+                if channel.id == self.trade_channel:
                     channel_id = channel.id
                     break
             if channel_id is not None:
