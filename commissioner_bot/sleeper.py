@@ -110,6 +110,10 @@ class Sleeper:
 
     async def process_transactions(self, week):
         success, transactions = self.get_league_transactions(week)
+        if week > 1:
+            success, previous_transactions = self.get_league_transactions(week - 1)
+            if success:
+                transactions = previous_transactions + transactions
         for transaction in transactions:
             transaction_id = transaction['transaction_id']
 
