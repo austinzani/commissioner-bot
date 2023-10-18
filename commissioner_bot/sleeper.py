@@ -1,7 +1,38 @@
 from commissioner_bot.network import send_request_with_retries
 from commissioner_bot.utility import team_colors
 from commissioner_bot.discord_bot import Discord, add_string, drop_string
-from commissioner_bot.mongodb import MongoCollection, db, player_collection, manager_collection
+from commissioner_bot.mongodb import MongoCollection, db, manager_collection
+import json
+
+
+def overwrite_json_file(file_path, data):
+    """
+    Overwrites a JSON file with new data.
+
+    Args:
+        file_path (str): The path to the JSON file.
+        data (dict): The data to be written to the JSON file.
+
+    Returns:
+        None
+    """
+    with open(file_path, 'w') as json_file:
+        json.dump(data, json_file)
+
+
+def read_json_file(file_path):
+    """
+    Reads and returns the contents of a JSON file.
+
+    Args:
+        file_path (str): The path to the JSON file.
+
+    Returns:
+        dict: The contents of the JSON file as a dictionary.
+    """
+    with open(file_path, 'r') as json_file:
+        data = json.load(json_file)
+    return data
 
 
 sleeper_logo_url = "https://play-lh.googleusercontent.com/Ox2yWLWnOTu8x2ZWVQuuf0VqK_27kEqDMnI91fO6-1HHkvZ24wTYCZRbVZfRdx3DXn4=w240-h480-rw"
@@ -12,6 +43,7 @@ class Sleeper:
         self.league_id = league_id
         self.league = MongoCollection(db, league_id)
         self.discord = discord
+        self.players = read_json_file('json_files/players.json')
 
     @staticmethod
     def get_nfl_state():
@@ -42,16 +74,12 @@ class Sleeper:
     def update_players():
         success, players = Sleeper.get_nfl_players()
         if success:
-            for player in players:
-                player_object = players[player]
-                player_object['_id'] = player
-                player_collection.insert(player_object)
+            overwrite_json_file('json_files/players.json', players)
         else:
             print('Failed to update players')
 
-    @staticmethod
-    def get_player(player_id):
-        return player_collection.get({"_id": player_id})
+    def get_player(self, player_id):
+        return self.players[player_id] if player_id in self.players else None
 
     def update_league_managers(self):
         success, users = self.get_league_users()

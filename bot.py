@@ -52,7 +52,6 @@ async def setup(interaction: discord.Interaction) -> None:
         # Compare the time stamp of the last message to now
         last_message_time = dm_history['message_time']
         time_difference = interaction_timestamp - last_message_time
-        print(time_difference)
         # If the last message was less than 15 minutes ago, send a message saying that they already have a setup in process
         if time_difference < 900:
             embed = discord.Embed(title="You already have a setup in process", description="Check your direct messages for next steps", color=discord.Color.red())

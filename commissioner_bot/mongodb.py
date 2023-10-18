@@ -35,7 +35,6 @@ class MongoCollection:
 
 
 db = MongoDatabase(os.environ['MONGODB_CONNECTION_URL'], 'commissioner_bot')
-player_collection = MongoCollection(db, 'players')
 manager_collection = MongoCollection(db, 'managers')
 reaction_collection = MongoCollection(db, 'reactions')
 guild_preferences_collection = MongoCollection(db, 'guild_preferences')
